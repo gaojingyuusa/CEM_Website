@@ -5,25 +5,28 @@ library(dplyr)
 
 # Read the World Bank official shapefile
 WB_map <- readOGR("WBG_Poly/WB_CountryPolys.shp")
-
+CJK <- c("CHN","JPN","KOR")
 # Read additional data and merge it to the shape file 
 df <- data.frame(
   ISO_Codes = WB_map@data$ISO_Codes,
-  val = runif(length(WB_map@data$ISO_Codes), 0, 1)
+  val = ifelse(WB_map@data$ISO_Codes %in% CJK,1,0),
+  label = ifelse(WB_map@data$ISO_Codes %in% CJK,"Available","Unavailable")
 )
 
 WB_map@data <- data.frame(WB_map@data, df[match(WB_map@data[,"ISO_Codes"], df[,"ISO_Codes"]),])
-pal2 <- colorNumeric("Blues", domain = WB_map@data$val)
+pal2 <- colorNumeric(c("grey","#009FDA"), domain = WB_map@data$val)
 
 WB_map %>% 
   leaflet() %>% 
   addPolygons(weight = 1, 
               # add labels that display mean income
-              color = "white",
+              color = "grey",
               fillColor = ~pal2(val),
-              label = ~paste0(Names," - ",round(val,2)),
+              fillOpacity = 1,
+              opacity=1,
+              label = ~paste0(Names," - ",label),
               # highlight polygons on hover
-              highlightOptions = highlightOptions(weight = 2, color = "black",
+              highlightOptions = highlightOptions(weight = 2, color = "white",
                                                   bringToFront = TRUE)) 
 
 
