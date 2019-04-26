@@ -1,0 +1,59 @@
+---
+title: "Untitled"
+author: "Alberto Sanchez Rodelgo"
+date: "April 18, 2019"
+output: html_document
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(shiny)
+library(DT)
+```
+
+
+```{r echo = FALSE}
+data <- read.csv("document.csv", stringsAsFactors = FALSE) %>%
+  gather(Topic, Topic_value, starts_with("M_")) %>%
+  mutate(Topic = gsub("M_","",Topic))
+
+regions <- unique(data$Region)
+countries <- unique(data$Country)
+topics <- unique(data$Topic)
+
+```
+
+```{r echo = FALSE, warning=FALSE, message=FALSE}
+selectInput('region',"Select Region",choices = c("All",regions), selected = "All")
+selectInput('country',"Select Country",choices = c("All",countries), selected = "All")
+selectInput('topic',"Select Topic",choices = c("All",topics), selected = "All")
+
+data_fltr <- reactive({
+  
+  if (input$region == "All") region_fltr <- regions else region_fltr <- input$region
+  if (input$country == "All") country_fltr <- countries else country_fltr <- input$country
+  if (input$topic == "All") topic_fltr <- topics else topic_fltr <- input$topic
+  
+  data_fltr <- filter(data, Region %in% region_fltr, Country %in% country_fltr, Topic %in% topic_fltr)
+
+})
+
+reactive({
+  updateSelectInput(session,'region',"Select Region",choices = c("All",unique(data_fltr()$Region)), selected = input$region)
+  updateSelectInput(session,'country',"Select Country",choices = c("All",unique(data_fltr()$Country)), selected = input$country)
+  updateSelectInput(session,'topic',"Select Topic",choices = c("All",unique(data_fltr()$Topic)), selected = input$topic)
+})
+
+
+```
+
+``` {r echo = FALSE}
+
+renderDataTable({
+  
+  datatable(data_fltr(),rownames = FALSE)
+})
+
+```
+
